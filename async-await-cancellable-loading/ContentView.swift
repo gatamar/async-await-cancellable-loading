@@ -35,11 +35,14 @@ struct ContentView_Previews: PreviewProvider {
     }
 }
 
-struct ContentView: View {
-    @State var selection : Int? = nil
-        
-    private func doHeavyWork1() async {
+class ContentViewModel: ObservableObject {
+    @Published var selection : Int? = nil
+    
+    private var heavyTask: Task<Void, Never>?
+    
+    func doHeavyWork1() async {
         for i in 0..<10 {
+            if Task.isCancelled { return }
             sleep(1)
             print("heavy work 1[\(i)]")
         }
@@ -52,6 +55,7 @@ struct ContentView: View {
     
     private func doHeavyWork2() async {
         for i in 0..<10 {
+            if Task.isCancelled { return }
             sleep(1)
             print("heavy work 2[\(i)]")
         }
@@ -62,30 +66,56 @@ struct ContentView: View {
         }
     }
     
+    func heavyWorkTask1() -> Task<Void, Never> {
+        heavyTask?.cancel()
+        heavyTask = Task {
+            await doHeavyWork1()
+        }
+        return heavyTask!
+    }
+    
+    func heavyWorkTask2() -> Task<Void, Never> {
+        heavyTask?.cancel()
+        heavyTask = Task {
+            await doHeavyWork2()
+        }
+        return heavyTask!
+    }
+}
+
+struct ContentView: View {
+    @ObservedObject var viewModel = ContentViewModel()
+    
     var body: some View {
         NavigationView{
             VStack{
-                NavigationLink(destination: Text("New Screen 1"), tag: 1, selection: self.$selection) {
-                    Text("")
-                }
+                Spacer()
                 
-                NavigationLink(destination: Text("New Screen 2"), tag: 2, selection: self.$selection) {
-                    Text("")
-                }
-                
-                Button("Button 1"){
-                    Task {
-                        await doHeavyWork1()
+                NavigationLink(
+                    destination: Text("New Screen 1"),
+                    tag: 1,
+                    selection: self.$viewModel.selection
+                ) {
+                    Button("Button 1"){
+                        _ = viewModel.heavyWorkTask1()
                     }
                 }
+                .buttonStyle(PlainButtonStyle())
                 
                 Spacer()
                 
-                Button("Button 2"){
-                    Task {
-                        await doHeavyWork2()
+                NavigationLink(
+                    destination: Text("New Screen 2"),
+                    tag: 2,
+                    selection: self.$viewModel.selection
+                ) {
+                    Button("Button 2"){
+                        _ = viewModel.heavyWorkTask2()
                     }
                 }
+                .buttonStyle(PlainButtonStyle())
+                
+                Spacer()
             }
         }
         .navigationViewStyle(StackNavigationViewStyle())
