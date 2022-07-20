@@ -38,6 +38,30 @@ struct ContentView_Previews: PreviewProvider {
 struct ContentView: View {
     @State var selection : Int? = nil
         
+    private func doHeavyWork1() async {
+        for i in 0..<10 {
+            sleep(1)
+            print("heavy work 1[\(i)]")
+        }
+        
+        await MainActor.run {
+            print("heavy work 1 FINISHED")
+            self.selection = 1
+        }
+    }
+    
+    private func doHeavyWork2() async {
+        for i in 0..<10 {
+            sleep(1)
+            print("heavy work 2[\(i)]")
+        }
+        
+        await MainActor.run {
+            print("heavy work 2 FINISHED")
+            self.selection = 2
+        }
+    }
+    
     var body: some View {
         NavigationView{
             VStack{
@@ -50,32 +74,16 @@ struct ContentView: View {
                 }
                 
                 Button("Button 1"){
-                    DispatchQueue.global().async {
-                        for i in 0..<10 {
-                            sleep(1)
-                            print("heavy work 1[\(i)]")
-                        }
-                        
-                        DispatchQueue.main.async {
-                            print("heavy work 1 FINISHED")
-                            self.selection = 1
-                        }
+                    async {
+                        await doHeavyWork1()
                     }
                 }
                 
                 Spacer()
                 
                 Button("Button 2"){
-                    DispatchQueue.global().async {
-                        for i in 0..<10 {
-                            sleep(1)
-                            print("heavy work 2[\(i)]")
-                        }
-                        
-                        DispatchQueue.main.async {
-                            print("heavy work 2 FINISHED")
-                            self.selection = 2
-                        }
+                    async {
+                        await doHeavyWork2()
                     }
                 }
             }
