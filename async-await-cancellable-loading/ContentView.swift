@@ -74,7 +74,7 @@ struct ContentView: View {
                 }
                 
                 Button("Button 1"){
-                    async {
+                    Task {
                         await doHeavyWork1()
                     }
                 }
@@ -82,7 +82,7 @@ struct ContentView: View {
                 Spacer()
                 
                 Button("Button 2"){
-                    async {
+                    Task {
                         await doHeavyWork2()
                     }
                 }
